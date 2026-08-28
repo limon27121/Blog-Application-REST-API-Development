@@ -21,8 +21,10 @@ export const register_user = async ({ firstname, lastname, email, password }) =>
     // note what is NOT in this signature: role and isActive. the controller
     // never forwards them, so a caller cannot make themselves an admin here.
     // the model defaults supply role = "user" and isActive = true
-    if (!firstname || !lastname || !email || !password) {
-        throw new ServiceError(400, "firstname, lastname, email and password are required")
+    // lastname is optional, so it is not in this check. an empty string or a
+    // missing key both become null rather than a "" row
+    if (!firstname || !email || !password) {
+        throw new ServiceError(400, "firstname, email and password are required")
     }
 
     const existing = await User.findOne({ where: { email } })
@@ -34,7 +36,7 @@ export const register_user = async ({ firstname, lastname, email, password }) =>
 
     const user = await User.create({
         firstname,
-        lastname,
+        lastname: lastname || null,
         email,
         password: hashedPassword,
     })

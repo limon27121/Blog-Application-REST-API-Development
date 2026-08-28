@@ -16,12 +16,12 @@ const User = sequelize.define(
         notEmpty: { msg: "firstname cannot be empty" },
       },
     },
+    // optional. a caller may register with a first name only, so this column
+    // stays nullable and carries no notEmpty check
     lastname: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: { msg: "lastname cannot be empty" },
-      },
+      allowNull: true,
+      defaultValue: null,
     },
     email: {
       type: DataTypes.STRING,
