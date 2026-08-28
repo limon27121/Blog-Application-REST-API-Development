@@ -1,17 +1,24 @@
 import express from "express";
 import authRoute from "./routes/auth.route.js";
+import userRoute from "./routes/user.route.js";
 
 const app = express();
 
 app.use(express.json()); // parse JSON request body
 
 app.use("/api/auth", authRoute);
-// /api/users  -> phase 6
+app.use("/api/users", userRoute);
 // /api/blogs  -> phase 8
 
-// nothing above matched, so the path does not exist
+// nothing above matched, so the path does not exist. the method and the raw
+// url are echoed back because "route not found" alone cannot tell a wrong
+// path apart from a right path reached with the wrong method
 app.use((req, res) => {
-    res.status(404).json({ message: "route not found" })
+    res.status(404).json({
+        message: "route not found",
+        method: req.method,
+        path: req.originalUrl,
+    })
 });
 
 // express hands any error thrown in a handler here. four arguments is what
