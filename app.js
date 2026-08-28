@@ -1,6 +1,7 @@
 import express from "express";
 import authRoute from "./routes/auth.route.js";
 import userRoute from "./routes/user.route.js";
+import blogRoute from "./routes/blogs.route.js";
 
 const app = express();
 
@@ -8,7 +9,7 @@ app.use(express.json()); // parse JSON request body
 
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
-// /api/blogs  -> phase 8
+app.use("/api/blogs", blogRoute);
 
 // nothing above matched, so the path does not exist. the method and the raw
 // url are echoed back because "route not found" alone cannot tell a wrong
