@@ -1,4 +1,10 @@
-import { create_blog, update_blog, delete_blog } from "../Services/blog.service.js";
+import {
+    create_blog,
+    update_blog,
+    delete_blog,
+    list_blogs,
+    get_blog,
+} from "../Services/blog.service.js";
 import { send_error } from "../middlewares/error.middleware.js";
 
 // POST /api/blogs/create
@@ -57,6 +63,39 @@ export const remove = async (req, res) => {
         res.status(200).json({
             message: "blog deleted",
             data: { id },
+        })
+    } catch (error) {
+        send_error(res, error)
+    }
+}
+
+// GET /api/blogs  and  GET /api/blogs?title=&category=
+// public: no token, so nothing here may read req.user
+export const get_blogs = async (req, res) => {
+    try {
+        const { title, category } = req.query
+
+        const blogs = await list_blogs({ title, category })
+
+        // a search that matches nothing is still a successful search, so the
+        // status stays 200 and only the wording changes
+        res.status(200).json({
+            message: blogs.length > 0 ? "blogs found" : "no blogs matched",
+            data: blogs,
+        })
+    } catch (error) {
+        send_error(res, error)
+    }
+}
+
+// GET /api/blogs/:id  (public)
+export const get_blog_by_id = async (req, res) => {
+    try {
+        const blog = await get_blog(req.params.id)
+
+        res.status(200).json({
+            message: "blog found",
+            data: blog,
         })
     } catch (error) {
         send_error(res, error)

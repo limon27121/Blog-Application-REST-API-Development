@@ -1,4 +1,5 @@
-import { Blog } from "../models/index.js";
+import { Op } from "sequelize";
+import { Blog, User } from "../models/index.js";
 import { ServiceError, parse_id } from "../middlewares/error.middleware.js";
 
 // update and delete share this rule exactly, so it lives in one place. the
@@ -73,4 +74,53 @@ export const delete_blog = async ({ id, actor }) => {
     await existing.destroy()
 
     return { id: existing.id }
+}
+
+// the three fields a guest may see about an author. email and password are
+// never part of a public read
+const AUTHOR_FIELDS = ["id", "firstname", "lastname"];
+
+// % and _ are wildcards inside LIKE, so a title containing them would match
+// far more than the caller asked for. backslash is mysql's default LIKE escape
+// character, so it has to be escaped as well
+const escape_like = (value) => value.replace(/[\\%_]/g, (character) => `\\${character}`)
+
+// GET /api/blogs serves the plain list, ?title=, ?category= and both together,
+// so the filter is built up rather than written as three separate handlers
+export const list_blogs = async ({ title, category }) => {
+    const where = {}
+
+    if (title !== undefined) {
+        const needle = String(title).trim()
+        if (needle !== "") {
+            where.blogTitle = { [Op.like]: `%${escape_like(needle)}%` } // partial match
+        }
+    }
+
+    if (category !== undefined) {
+        const wanted = String(category).trim()
+        if (wanted !== "") {
+            where.category = wanted // exact match
+        }
+    }
+
+    return Blog.findAll({
+        where,
+        include: [{ model: User, as: "author", attributes: AUTHOR_FIELDS }],
+        order: [["id", "DESC"]], // newest first
+    })
+}
+
+export const get_blog = async (id) => {
+    const blog_id = parse_id(id, "blog id")
+
+    const blog = await Blog.findByPk(blog_id, {
+        include: [{ model: User, as: "author", attributes: AUTHOR_FIELDS }],
+    })
+
+    if (!blog) {
+        throw new ServiceError(404, "blog not found")
+    }
+
+    return blog
 }
