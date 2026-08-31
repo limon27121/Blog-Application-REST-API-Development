@@ -21,3 +21,6 @@ Thumbs.db
 coverage/
 dist/
 build/
+
+# Newman generated reports
+newman/

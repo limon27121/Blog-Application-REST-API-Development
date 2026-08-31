@@ -37,14 +37,23 @@ Assginment/
 │   ├── blog.model.js           blogs table
 │   └── index.js                associations, imported once at boot
 ├── routes/
-│   └── auth.route.js           /api/auth
+│   ├── auth.route.js           /api/auth
+│   ├── user.route.js           /api/users
+│   └── blogs.route.js          /api/blogs
 ├── controller/
-│   └── auth.controller.js      request/response only
+│   ├── auth.controller.js      request/response only
+│   ├── user.controller.js
+│   └── blogs.controller.js
 ├── Services/
-│   └── auth.service.js         business rules, database access
+│   ├── auth.service.js         business rules, database access
+│   ├── user.service.js
+│   └── blog.service.js
 ├── middlewares/
 │   ├── auth.middleware.js      verify_token, is_admin
 │   └── error.middleware.js     ServiceError, send_error, parse_id
+├── Photos/                     screenshots used by this README
+├── Blog.postman_collection.json         78-request test suite
+├── CheckBlog.postman_collection.json    16-request endpoint collection
 ├── app.js                      express app, 404 and error handlers
 └── server.js                   env checks, db sync, listen
 ```
@@ -59,9 +68,11 @@ and touches the database. Nothing else talks to Sequelize.
 
 **Requirements:** Node.js 18+, MySQL running locally.
 
-**1. Install dependencies**
+**1. Clone and install dependencies**
 
 ```bash
+git clone https://github.com/limon27121/Blog-Application-REST-API-Development.git
+cd Blog-Application-REST-API-Development/Assginment
 npm install
 ```
 
@@ -242,10 +253,84 @@ Errors carry only a `message`:
 
 ## Testing
 
-The full Postman collection with test scripts and assertions is published here:
-
+**Published Postman documentation:**
 https://documenter.getpostman.com/view/24742376/2sBYAuSWoi
+
+Two collections are committed to this repository, so either can be run without a
+Postman account:
+
+| File | Purpose |
+|---|---|
+| `CheckBlog.postman_collection.json` | one request per endpoint — the readable reference |
+| `Blog.postman_collection.json` | the full test suite, every endpoint with valid and invalid input |
+
+The test plan behind the suite — what each case asserts and why — is in
+`.Claude/Project_Description/Api_test_plan.md`.
+
+### Coverage
+
+**78 requests, 492 assertions**, covering every endpoint:
+
+| Folder | What it checks |
+|---|---|
+| 1. Auth | registration defaults, duplicate email, privilege escalation, login, deactivated accounts |
+| 2. Users (Admin) | role gating, 404 vs 400 on ids, the deactivate → login-fails → reactivate → login-works chain |
+| 3. Profile | self-service reads and writes, the `role` / `isActive` allow-list, password change verified by logging in again |
+| 4. Blogs | ownership rules for update and delete, `userId` spoofing, public search and filter |
+| 5. Cross-cutting | unknown route, malformed JSON, tampered token, missing `Bearer` prefix, stack-trace leaks |
+
+Assertions check response data, not only status codes. After a rejected write
+the record is read back to prove nothing changed, and after a delete the blog is
+fetched again to prove it is gone.
+
+### Run in Postman
 
 Import the collection, set the `Base_Url` collection variable to
 `http://localhost:5000`, then run the requests in order — the register and login
 requests capture the tokens and ids that the later requests depend on.
+
+### Run from the terminal with Newman
+
+With the server running in another terminal:
+
+```bash
+npx newman run Blog.postman_collection.json
+```
+
+No environment file is needed — `Base_Url` ships as a collection variable. To
+point the suite at another host:
+
+```bash
+npx newman run Blog.postman_collection.json --env-var "Base_Url=http://localhost:5000"
+```
+
+For an HTML report:
+
+```bash
+npx newman run Blog.postman_collection.json -r cli,htmlextra
+```
+
+### Result
+
+Both collections run green against a live server:
+
+| Collection | Requests | Assertions | Failed |
+|---|---|---|---|
+| `CheckBlog.postman_collection.json` — one request per endpoint | 16 | 41 | 0 |
+| `Blog.postman_collection.json` — the full test suite | 78 | 492 | 0 |
+
+![Newman run of the endpoint collection: 16 requests, 41 assertions, 0 failures](Photos/newman-run.png)
+
+```
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │         executed │           failed │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              requests   │               78 │                0 │
+│            test-scripts │              156 │                0 │
+│      prerequest-scripts │               82 │                0 │
+│              assertions │              492 │                0 │
+└─────────────────────────┴──────────────────┴──────────────────┘
+```
+
+Newman exits with code `0` when every assertion passes and `1` on any failure,
+so the suite can be wired into CI unchanged.

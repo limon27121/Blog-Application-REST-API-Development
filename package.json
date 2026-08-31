@@ -22,6 +22,8 @@
     "sequelize": "^6.37.8"
   },
   "devDependencies": {
+    "newman": "^6.2.2",
+    "newman-reporter-htmlextra": "^1.23.1",
     "nodemon": "^3.1.14"
   }
 }

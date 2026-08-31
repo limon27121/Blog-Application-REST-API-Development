@@ -334,7 +334,7 @@
                   "});",
                   "",
                   "pm.test(\"message is the expected one\", function () {",
-                  "    pm.expect(body.message).to.eql(\"firstname, lastname, email and password are required\");",
+                  "    pm.expect(body.message).to.eql(\"firstname, email and password are required\");",
                   "});"
                 ],
                 "type": "text/javascript",
