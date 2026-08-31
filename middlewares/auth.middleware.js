@@ -11,7 +11,7 @@ export const verify_token = (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1]
-
+//verify token
     try {
         // throws if the signature is wrong or the token has expired
         req.user = jwt.verify(token, process.env.SECRET_KEY)

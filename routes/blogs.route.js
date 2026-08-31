@@ -15,7 +15,9 @@ const router = express.Router();
 router.get("/", get_blogs);
 
 // writes, all authenticated
+
 router.post("/create", verify_token, create);
+
 router.put("/update/:id", verify_token, update);
 
 // the assignment names DELETE /api/blogs/:id, the plan also asks for
